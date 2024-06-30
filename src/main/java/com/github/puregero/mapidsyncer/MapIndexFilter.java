@@ -24,7 +24,7 @@ public class MapIndexFilter extends MapIndex {
         this.plugin = plugin;
         this.mapIndex = Objects.requireNonNull(mapIndex, "mapIndex");
 
-        this.ASYNC_EXECUTOR = r -> this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, r);
+        this.ASYNC_EXECUTOR = r -> Thread.ofVirtual().name("MapIdSyncer").start(r);
 
         generateNextMapId(initialNextMapId);
     }
