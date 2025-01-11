@@ -1,7 +1,7 @@
-name: ${project.name}
-version: ${project.version}
-description: ${project.description}
-main: ${project.groupId}.${project.name}Plugin
+name: MapIdSyncer
+version: ${version}
+description: Syncs map ids between servers
+main: ${group}.MapIdSyncerPlugin
 author: PureGero
 website: https://github.com/PureGero/mapid-syncer
 api-version: 1.20

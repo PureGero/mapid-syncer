@@ -37,13 +37,13 @@ public class MapIdSyncerPlugin extends JavaPlugin implements Listener {
 
         MapId nextMapId = MinecraftServer.getServer().overworld().getFreeMapId(); // Load the idcounts data storage
 
-        this.previousMapIndex = (MapIndex) MinecraftServer.getServer().overworld().getDataStorage().cache.get("idcounts");
-        MinecraftServer.getServer().overworld().getDataStorage().set("idcounts", new MapIndexFilter(this, nextMapId, this. previousMapIndex));
+        this.previousMapIndex = (MapIndex) MinecraftServer.getServer().overworld().getDataStorage().cache.get("idcounts").orElseThrow();
+        MinecraftServer.getServer().overworld().getDataStorage().set("idcounts", new MapIndexFilter(this, nextMapId, (MapIndex) this.previousMapIndex));
     }
 
     @Override
     public void onDisable() {
-        MinecraftServer.getServer().overworld().getDataStorage().set("idcounts", this. previousMapIndex);
+        MinecraftServer.getServer().overworld().getDataStorage().set("idcounts", this.previousMapIndex);
     }
 
 }
