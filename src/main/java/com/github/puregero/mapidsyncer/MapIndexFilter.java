@@ -1,15 +1,11 @@
 package com.github.puregero.mapidsyncer;
 
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.saveddata.maps.MapId;
 import net.minecraft.world.level.saveddata.maps.MapIndex;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -17,12 +13,13 @@ public class MapIndexFilter extends MapIndex {
 
     private final Executor ASYNC_EXECUTOR;
     private final JavaPlugin plugin;
-    private final MapIndex mapIndex;
     private CompletableFuture<MapId> nextMapId = CompletableFuture.failedFuture(new RuntimeException("No next map id"));
+    private MapId lastMapId;
 
-    public MapIndexFilter(JavaPlugin plugin, MapId initialNextMapId, MapIndex mapIndex) {
+    public MapIndexFilter(JavaPlugin plugin, MapId initialNextMapId) {
+        super(initialNextMapId.id());
+        this.lastMapId = initialNextMapId;
         this.plugin = plugin;
-        this.mapIndex = Objects.requireNonNull(mapIndex, "mapIndex");
 
         this.ASYNC_EXECUTOR = r -> Thread.ofVirtual().name("MapIdSyncer").start(r);
 
@@ -41,7 +38,11 @@ public class MapIndexFilter extends MapIndex {
 
     private MapId sqlNextMapId(MapId desiredMapId) {
         while (desiredMapId == null || !sqlAcquireMapId(desiredMapId.id())) {
-            desiredMapId = this.mapIndex.getFreeAuxValueForMap();
+            desiredMapId = super.getNextMapId();
+        }
+
+        if (desiredMapId.id() > this.lastMapId.id()) {
+            this.lastMapId = desiredMapId;
         }
 
         this.plugin.getLogger().info("Acquired map id " + desiredMapId.id());
@@ -59,28 +60,14 @@ public class MapIndexFilter extends MapIndex {
         }
     }
 
+    public MapIndex toVanillaMapIndex() {
+        MapIndex mapIndex = new MapIndex(this.lastMapId.id());
+        mapIndex.setDirty(this.isDirty());
+        return mapIndex;
+    }
+
     @Override
-    public MapId getFreeAuxValueForMap() {
+    public MapId getNextMapId() {
         return generateNextMapId(null).join();
-    }
-
-    @Override
-    public CompoundTag save(CompoundTag nbt, HolderLookup.Provider registryLookup) {
-        return this.mapIndex.save(nbt, registryLookup);
-    }
-
-    @Override
-    public void setDirty() {
-        this.mapIndex.setDirty();
-    }
-
-    @Override
-    public void setDirty(boolean var0) {
-        this.mapIndex.setDirty(var0);
-    }
-
-    @Override
-    public boolean isDirty() {
-        return this.mapIndex.isDirty();
     }
 }

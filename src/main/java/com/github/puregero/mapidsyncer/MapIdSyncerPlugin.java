@@ -11,8 +11,6 @@ import java.sql.SQLException;
 
 public class MapIdSyncerPlugin extends JavaPlugin implements Listener {
 
-    private MapIndex previousMapIndex = null;
-
     @Override
     public void onEnable() {
         this.saveDefaultConfig();
@@ -36,14 +34,17 @@ public class MapIdSyncerPlugin extends JavaPlugin implements Listener {
         }
 
         MapId nextMapId = MinecraftServer.getServer().overworld().getFreeMapId(); // Load the idcounts data storage
-
-        this.previousMapIndex = (MapIndex) MinecraftServer.getServer().overworld().getDataStorage().cache.get("idcounts").orElseThrow();
-        MinecraftServer.getServer().overworld().getDataStorage().set("idcounts", new MapIndexFilter(this, nextMapId, (MapIndex) this.previousMapIndex));
+        MinecraftServer.getServer().overworld().getDataStorage().set(MapIndex.TYPE, new MapIndexFilter(this, nextMapId));
     }
 
     @Override
     public void onDisable() {
-        MinecraftServer.getServer().overworld().getDataStorage().set("idcounts", this.previousMapIndex);
+        MinecraftServer.getServer().overworld().getDataStorage().cache.get(MapIndex.TYPE).ifPresent(previousMapIndex -> {
+            if (previousMapIndex instanceof MapIndexFilter mapIndexFilter) {
+                MinecraftServer.getServer().overworld().getDataStorage().set(MapIndex.TYPE, mapIndexFilter.toVanillaMapIndex());
+            }
+        });
+
     }
 
 }
